@@ -1,0 +1,24 @@
+export interface IKeyboardEvent {
+
+	readonly _standardKeyboardEventBrand: true;
+
+	readonly browserEvent: KeyboardEvent;
+	readonly target: HTMLElement;
+
+	readonly ctrlKey: boolean;
+	readonly shiftKey: boolean;
+	readonly altKey: boolean;
+	readonly metaKey: boolean;
+	readonly altGraphKey: boolean;
+	readonly keyCode: KeyCode;
+	readonly code: string;
+
+	/**
+	 * @internal
+	 */
+	toKeyCodeChord(): KeyCodeChord;
+	equals(keybinding: number): boolean;
+
+	preventDefault(): void;
+	stopPropagation(): void;
+}
