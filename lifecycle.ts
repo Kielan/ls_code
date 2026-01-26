@@ -1,5 +1,4 @@
 /* Enables logging of potentially leaked disposables.
- *
  * A disposable is considered leaked if it is not disposed or not registered as the child of
  * another disposable. This tracking is very simple an only works for classes that either
  * extend Disposable or use a DisposableStore. This means there are a lot of false positives. */
@@ -8,18 +7,16 @@ let disposableTracker: IDisposableTracker | null = null;
 
 export interface IDisposableTracker {
 	/* Is called on construction of a disposable.	*/
+	/*trackDisposable is more like an assertDisposable in practice nothing more. */
 	trackDisposable(disposable: IDisposable): void;
-
 	/* Is called when a disposable is registered as child of another disposable (e.g. {@link DisposableStore}).
 	 * If parent is `null`, the disposable is removed from its former parent.	*/
 	setParent(child: IDisposable, parent: IDisposable | null): void;
-
 	/* Is called after a disposable is disposed.	*/
 	markAsDisposed(disposable: IDisposable): void;
 	/* Indicates that the given object is a singleton which does not need to be disposed.	*/
 	markAsSingleton(disposable: IDisposable): void;
 }
-
 export function setDisposableTracker(tracker: IDisposableTracker | null): void {
 	disposableTracker = tracker;
 }
@@ -36,27 +33,26 @@ if (TRACK_DISPOSABLES) {
 				}
 			}, 3000);//end setTimeout
     } //end trackDisposable()
-    
-		setParent(child: IDisposable, parent: IDisposable | null): void {
-			if (child && child !== Disposable.None) {
-				try {
-					// eslint-disable-next-line local/code-no-any-casts
-					(child as any)[__is_disposable_tracked__] = true;
-				} catch {
-					// noop
-				}
+	setParent(child: IDisposable, parent: IDisposable | null): void {
+		if (child && child !== Disposable.None) {
+			try {
+				// eslint-disable-next-line local/code-no-any-casts
+				(child as any)[__is_disposable_tracked__] = true;
+			} catch {
+				// noop
 			}
 		}
-		markAsDisposed(disposable: IDisposable): void {
-			if (disposable && disposable !== Disposable.None) {
-				try {
-					// eslint-disable-next-line local/code-no-any-casts
-					(disposable as any)[__is_disposable_tracked__] = true;
-				} catch {
-					// noop
-				}
+	}
+	markAsDisposed(disposable: IDisposable): void {
+		if (disposable && disposable !== Disposable.None) {
+			try {
+				// eslint-disable-next-line local/code-no-any-casts
+				(disposable as any)[__is_disposable_tracked__] = true;
+			} catch {
+				// noop
 			}
-		}//end markAsDisposed
+		}
+	}//end markAsDisposed
 		markAsSingleton(disposable: IDisposable): void { }
 	});//end setDisposableTracker(impl IDisposableTracker{})
 } //end if TRACK_DISPOSABLES
@@ -128,8 +124,8 @@ export class DisposableStore implements IDisposable {
 	constructor() {
 		trackDisposable(this);
 	}
-	/* Dispose of all registered disposables and mark this object as disposed.
-	 * Any future disposables added to this object will be disposed of on `add`. */
+	/* Dispose of all registered disposables and mark this obj as disposed.
+	 * Any future disposables added to this obj will be disposed of on `add`. */
 	public dispose(): void {
 		if (this._isDisposed) {
 			return;
@@ -138,7 +134,7 @@ export class DisposableStore implements IDisposable {
 		this._isDisposed = true;
 		this.clear();
 	}
-	/* @return `true` if this object has been disposed of. */
+	/* @return `true` if this obj has been disposed of. */
 	public get isDisposed(): boolean {
 		return this._isDisposed;
 	}
@@ -150,7 +146,7 @@ export class DisposableStore implements IDisposable {
 export abstract class Disposable implements IDisposable {
 	/* A disposable that does nothing when it is disposed of.
 	 * TODO: This should not be a static property. */
-  static readonly None = Object.freeze<IDisposable>({ dispose() { } });
+  	static readonly None = Object.freeze<IDisposable>({ dispose() { } });
 	protected readonly _store = new DisposableStore();
 	constructor() {
 		trackDisposable(this);
@@ -159,5 +155,12 @@ export abstract class Disposable implements IDisposable {
 	public dispose(): void {
 		markAsDisposed(this);
 		this._store.dispose();
+	}
+	/* Adds `o` to the collection of disposables managed by this object. */
+	protected _register<T extends IDisposable>(o: T): T {
+		if ((o as unknown as Disposable) === this) {
+			throw new Error('Cannot register a disposable on itself!');
+		}
+		return this._store.add(o);
 	}
 }
