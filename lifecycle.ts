@@ -7,7 +7,7 @@ let disposableTracker: IDisposableTracker | null = null;
 
 export interface IDisposableTracker {
 	/* Is called on construction of a disposable.	*/
-	/*trackDisposable is more like an assertDisposable in practice nothing more. */
+	/* trackDisposable is more like an assertDisposable in practice nothing more. */
 	trackDisposable(disposable: IDisposable): void;
 	/* Is called when a disposable is registered as child of another disposable (e.g. {@link DisposableStore}).
 	 * If parent is `null`, the disposable is removed from its former parent.	*/
